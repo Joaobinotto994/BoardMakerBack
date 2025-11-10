@@ -62,7 +62,7 @@ function autenticarToken(req, res, next) {
     req.usuario = usuario;
     next();
   } catch (err) {
-    return res.status(403).json({ error: "Token inválido ou expirado" });
+    return res.status(403).json({ error: "Seu acesso expirou , faça login novamente!" });
   }
 }
 
@@ -138,7 +138,7 @@ app.post('/login', async (req, res) => {
     const token = jwt.sign(
       { id: usuario._id, email: usuario.email, nome: usuario.nome },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "6h" }
     );
 
     // ✅ Retorna token + dados do usuário
