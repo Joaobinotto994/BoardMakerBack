@@ -437,11 +437,11 @@ boards: boardsParsed.map(b => ({
 // Listar pedalboards do usuário logado
 app.get('/meus-pedalboards', autenticarToken, async (req, res) => {
   try {
-    const pedalboards = await Pedalboard.find({ usuario: req.usuario.id })
-      .populate('pedais')
-      .populate('usuario', 'nome email')
-      .select("+curtidas"); // 👈 inclui curtidas se o campo for oculto por padrão
-
+ const pedalboards = await Pedalboard.find({ usuario: req.usuario.id })
+  .populate('pedais.pedalId')
+  .populate('boards.boardId') // 👈 adiciona isso!
+  .populate('usuario', 'nome email')
+  .select("+curtidas");
     // 🔹 Garante que o campo "estilo" seja sempre retornado
     const pedalboardsComEstilo = pedalboards.map(p => ({
       ...p.toObject(),
@@ -462,12 +462,13 @@ app.get("/pedalboards/search", autenticarToken, async (req, res) => {
     const q = req.query.q;
     if (!q) return res.status(400).json({ error: "Informe um termo de pesquisa" });
 
-    const pedalboards = await Pedalboard.find({
-      nome: { $regex: q, $options: "i" }
-    })
-      .populate("usuario", "nome email")
-      .populate("pedais")
-      .select("+curtidas"); // 👈 adiciona campo curtidas, caso ele esteja oculto
+const pedalboards = await Pedalboard.find({
+  nome: { $regex: q, $options: "i" }
+})
+  .populate("usuario", "nome email")
+  .populate("pedais.pedalId")
+  .populate("boards.boardId") // 👈 adiciona aqui também
+  .select("+curtidas"); // 👈 adiciona campo curtidas, caso ele esteja oculto
 
     res.json(pedalboards);
   } catch (err) {
@@ -564,10 +565,10 @@ app.put('/pedalboards/:id', autenticarToken, uploadFields, async (req, res) => {
 // Listar todos os pedalboards de todos os usuários
 app.get('/todos-pedalboards', autenticarToken, async (req, res) => {
   try {
-    const pedalboards = await Pedalboard.find()
-      .populate('pedais')
-      .populate('usuario', 'nome email');
-
+   const pedalboards = await Pedalboard.find()
+  .populate('pedais.pedalId')
+  .populate('boards.boardId') // 👈 adiciona isso também
+  .populate('usuario', 'nome email');
     // 👇 Inclui o campo estilo (caso não exista, retorna null)
     res.json({ 
       pedalboards: pedalboards.map(p => ({
