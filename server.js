@@ -832,8 +832,7 @@ app.get("/pedalboards/curtidos/:userId", autenticarToken, async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar pedalboards curtidos", detalhes: err.message });
   }
 });
-// GET /pedalboards/sugeridos/:userId
-// GET /pedalboards/sugeridos/:userId
+
 app.get('/pedalboards/sugeridos/:userId', autenticarToken, async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -1027,13 +1026,18 @@ app.get("/pedais/todos", autenticarToken, async (req, res) => {
   try {
     const search = req.query.search ? req.query.search.trim() : "";
 
-    // Busca pedais por nome (case-insensitive)
+    // Se tiver algo para pesquisar, procura por nome OU categoria
     const filtro = search
-      ? { nome: { $regex: search, $options: "i" } }
+      ? {
+          $or: [
+            { nome: { $regex: search, $options: "i" } },
+            { categoria: { $regex: search, $options: "i" } },
+          ],
+        }
       : {};
 
     const pedais = await Pedal.find(filtro)
-      .populate("usuarioId", "nome email") // para mostrar o criador
+      .populate("usuarioId", "nome email") // mostra o criador
       .sort({ createdAt: -1 });
 
     res.json(pedais);
@@ -1042,7 +1046,6 @@ app.get("/pedais/todos", autenticarToken, async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar pedais", detalhes: err.message });
   }
 });
-
 // Copiar um pedal existente para a biblioteca do usuário logado
 app.post("/pedais/copiar/:id", autenticarToken, async (req, res) => {
   try {
