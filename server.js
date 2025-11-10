@@ -46,6 +46,22 @@ const usuariosVerificadores = [
 app.use(cors());
 app.use(express.json());
 
+app.post("/upload-fundo", autenticarToken, async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) return res.status(400).json({ error: "Nenhuma imagem enviada" });
+
+    const uploadResult = await cloudinary.uploader.upload(image, {
+      folder: "pedalboards/fundos",
+      resource_type: "image"
+    });
+
+    res.json({ url: uploadResult.secure_url });
+  } catch (err) {
+    console.error("Erro ao enviar fundo:", err);
+    res.status(500).json({ error: "Erro ao enviar fundo", detalhes: err.message });
+  }
+});
 
 const placeholder = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/v1234567890/placeholder.png`;
 
@@ -855,23 +871,7 @@ app.get('/pedalboards/sugeridos/:userId', autenticarToken, async (req, res) => {
   }
 });
 
-app.post("/upload-fundo", autenticarToken, async (req, res) => {
-  try {
-    const { image } = req.body;
-    if (!image) return res.status(400).json({ error: "Nenhuma imagem enviada" });
 
-    // Faz upload direto pro Cloudinary
-    const uploadResult = await cloudinary.uploader.upload(image, {
-      folder: "pedalboards/fundos",
-      resource_type: "image"
-    });
-
-    res.json({ url: uploadResult.secure_url });
-  } catch (err) {
-    console.error("Erro ao enviar fundo:", err);
-    res.status(500).json({ error: "Erro ao enviar fundo", detalhes: err.message });
-  }
-});
 
 // ------------------------ Pedais ------------------------
 
