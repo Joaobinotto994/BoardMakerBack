@@ -79,7 +79,18 @@ app.post("/upload-fundo", autenticarToken, async (req, res) => {
     res.json({ url: uploadResult.secure_url });
   } catch (err) {
     console.error("Erro ao enviar fundo:", err);
-    res.status(500).json({ error: "Erro ao enviar fundo", detalhes: err.message });
+
+    // 💥 se o erro for de tamanho grande (body > 10MB)
+    if (err.message.includes("request entity too large")) {
+      return res.status(413).json({
+        error: "Imagem é grande demais!! Não é permitido imagens de mais de 9MB"
+      });
+    }
+
+    res.status(500).json({
+      error: "Erro ao enviar fundo",
+      detalhes: err.message
+    });
   }
 });
 
