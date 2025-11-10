@@ -731,30 +731,34 @@ app.post("/pedalboards/duplicar/:id", autenticarToken, async (req, res) => {
       descricao: original.descricao,
       estilo: Array.isArray(original.estilo) ? original.estilo : (original.estilo ? [original.estilo] : []),
       usuario: userId,
-      pedais: original.pedais.map(p => ({
-        pedalId: p.pedalId._id,
-        x: p.x,
-        y: p.y,
-        rotation: p.rotation,
-        zIndex: p.zIndex,
-        widthCm: p.widthCm,
-        heightCm: p.heightCm,
-        src: p.src
-      })),
-      boards: original.boards.map(b => ({
-        boardId: b.boardId._id,
-        x: b.x,
-        y: b.y,
-        rotation: b.rotation,
-        zIndex: b.zIndex,
-        widthCm: b.widthCm,
-        heightCm: b.heightCm,
-        src: b.src
-      })),
+      pedais: original.pedais
+        .filter(p => p.pedalId) // 👈 evita nulls
+        .map(p => ({
+          pedalId: p.pedalId._id,
+          x: p.x,
+          y: p.y,
+          rotation: p.rotation,
+          zIndex: p.zIndex,
+          widthCm: p.widthCm,
+          heightCm: p.heightCm,
+          src: p.src
+        })),
+      boards: original.boards
+        .filter(b => b.boardId) // 👈 evita nulls
+        .map(b => ({
+          boardId: b.boardId._id,
+          x: b.x,
+          y: b.y,
+          rotation: b.rotation,
+          zIndex: b.zIndex,
+          widthCm: b.widthCm,
+          heightCm: b.heightCm,
+          src: b.src
+        })),
       imagem: original.imagem,
       imagemCard: original.imagemCard || null,
       fundo: original.fundo || null,
-      annotations: original.annotations || [] // ← copiando as annotations
+      annotations: original.annotations || []
     });
 
     await clone.save();
@@ -764,8 +768,8 @@ app.post("/pedalboards/duplicar/:id", autenticarToken, async (req, res) => {
       novoId: clone._id
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erro ao adicionar pedalboard." });
+    console.error("Erro ao duplicar pedalboard:", err);
+    res.status(500).json({ message: "Erro ao adicionar pedalboard.", detalhes: err.message });
   }
 });
 // Curtir / Descurtir pedalboard
