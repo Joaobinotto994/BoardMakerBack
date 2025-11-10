@@ -678,17 +678,18 @@ app.get('/pedalboards/:id', autenticarToken, async (req, res) => {
       spec: p.spec || ''
     }));
 
-    const boards = (pedalboard.boards || []).map(b => ({
-      id: b._id.toString(),
-      boardId: b.boardId?._id?.toString() || undefined,
-      src: b.boardId?.imagem || b.src || 'https://placehold.co/300x300?text=Sem+Imagem',
-      x: b.x || 0,
-      y: b.y || 0,
-      rotation: b.rotation || 0,
-      zIndex: b.zIndex || 10,
-      widthCm: b.boardId?.widthCm || b.widthCm || 30,
-      heightCm: b.boardId?.heightCm || b.heightCm || 30
-    }));
+const boards = (pedalboard.boards || []).map(b => ({
+  id: b._id.toString(),
+  boardId: b.boardId?._id?.toString() || undefined,
+  nome: b.boardId?.nome || "Sem nome", // ✅ adicione isto
+  src: b.boardId?.imagem || b.src || 'https://placehold.co/300x300?text=Sem+Imagem',
+  x: b.x || 0,
+  y: b.y || 0,
+  rotation: b.rotation || 0,
+  zIndex: b.zIndex || 10,
+  widthCm: b.boardId?.widthCm || b.widthCm || 30,
+  heightCm: b.boardId?.heightCm || b.heightCm || 30
+}));
 
     res.json({
       id: pedalboard._id.toString(),
