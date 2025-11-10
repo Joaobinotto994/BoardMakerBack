@@ -402,16 +402,16 @@ const novoPedalboard = new Pedalboard({
         widthCm: p.widthCm || 8,
         heightCm: p.heightCm || 8
     })),
-    boards: boardsParsed.map(b => ({
-        boardId: b.boardId,
-        x: b.x || 0,
-        y: b.y || 0,
-        rotation: b.rotation || 0,
-        zIndex: b.zIndex || 10,
-        src: b.src || p.src || placeholder,
-        widthCm: b.widthCm || 30,
-        heightCm: b.heightCm || 30
-    })),
+boards: boardsParsed.map(b => ({
+  boardId: b.boardId,
+  x: b.x || 0,
+  y: b.y || 0,
+  rotation: b.rotation || 0,
+  zIndex: b.zIndex || 10,
+  src: b.src || placeholder, // ✅ corrigido
+  widthCm: b.widthCm || 30,
+  heightCm: b.heightCm || 30
+})),
     usuario: req.usuario.id,
     artista: artista || req.usuario.nome,
     imagem,
@@ -536,7 +536,7 @@ app.put('/pedalboards/:id', autenticarToken, uploadFields, async (req, res) => {
         const existingB = b.id ? pedalboard.boards.id(b.id) : null;
         return {
           boardId: existingB?.boardId || b.boardId || undefined,
-          src: existingB?.src || b.src || p.src || placeholder,
+         src: existingB?.src || b.src || placeholder, // ✅ corrigido
           x: b.x || 0,
           y: b.y || 0,
           rotation: b.rotation || 0,
