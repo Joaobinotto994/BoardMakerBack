@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
@@ -6,7 +7,7 @@ const cors = require('cors');
 const path = require('path'); // ← adicionado
 const multer = require('multer'); // ← ADICIONE ISSO AQUI
 
-require('dotenv').config();
+
 const { v2: cloudinary } = require('cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
@@ -30,7 +31,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Models
 const User = require('./models/User');
@@ -56,7 +57,7 @@ function autenticarToken(req, res, next) {
   if (!token) return res.status(401).json({ error: "Acesso negado. Token não fornecido." });
 
   try {
-    const usuario = jwt.verify(token, "segredo_do_token_aqui");
+    const usuario = jwt.verify(token, process.env.JWT_SECRET);
     req.usuario = usuario;
     next();
   } catch (err) {
@@ -107,7 +108,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: usuario._id, email: usuario.email, nome: usuario.nome },
-      "segredo_do_token_aqui",
+      process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
@@ -128,7 +129,7 @@ app.put('/usuarios/me/avatar', async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ error: "Token não fornecido" });
 
-    const decoded = jwt.verify(token, "segredo_do_token_aqui");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const usuario = await User.findById(decoded.id);
     if (!usuario) return res.status(404).json({ error: "Usuário não encontrado" });
 
@@ -146,7 +147,7 @@ app.put('/usuarios/me/avatar', async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ error: "Token não fornecido" });
 
-    const decoded = jwt.verify(token, "segredo_do_token_aqui");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const usuario = await User.findById(decoded.id);
     if (!usuario) return res.status(404).json({ error: "Usuário não encontrado" });
 
@@ -165,7 +166,7 @@ app.get('/usuarios/me', async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ error: "Token não fornecido" });
 
-    const decoded = jwt.verify(token, "segredo_do_token_aqui");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const usuario = await User.findById(decoded.id);
     if (!usuario) return res.status(404).json({ error: "Usuário não encontrado" });
 
@@ -310,13 +311,12 @@ app.patch('/boards/:id/verificar', autenticarToken, async (req, res) => {
 // GET /boards/:id - retorna um board específico do usuário logado
 app.get('/boards/:id', autenticarToken, async (req, res) => {
   try {
-    const board = await Board.findOne({ _id: req.params.id, usuarioId: req.usuario.id });
+    const board = await Board.findById(req.params.id);
 
     if (!board) {
       return res.status(404).json({ error: "Board não encontrado" });
     }
 
-    // Retorna apenas os campos necessários para o card
     res.json({
       _id: board._id,
       nome: board.nome,
@@ -855,6 +855,24 @@ app.get('/pedalboards/sugeridos/:userId', autenticarToken, async (req, res) => {
   }
 });
 
+app.post("/upload-fundo", autenticarToken, async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) return res.status(400).json({ error: "Nenhuma imagem enviada" });
+
+    // Faz upload direto pro Cloudinary
+    const uploadResult = await cloudinary.uploader.upload(image, {
+      folder: "pedalboards/fundos",
+      resource_type: "image"
+    });
+
+    res.json({ url: uploadResult.secure_url });
+  } catch (err) {
+    console.error("Erro ao enviar fundo:", err);
+    res.status(500).json({ error: "Erro ao enviar fundo", detalhes: err.message });
+  }
+});
+
 // ------------------------ Pedais ------------------------
 
 // Criar Pedal
@@ -1066,13 +1084,12 @@ app.post("/test-upload", upload.single("imagem"), (req, res) => {
 
 // ------------------------ Conexão MongoDB ------------------------
 
-const uri = "mongodb+srv://jbinotto36_db_user:a1b2c3@meupedalboardcluster.rliwxam.mongodb.net/meuPedalboardDB?retryWrites=true&w=majority";
-mongoose.connect(uri)
-  .then(() => console.log('MongoDB conectado com sucesso!'))
-  .catch(err => console.log('Erro ao conectar MongoDB:', err));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('✅ MongoDB conectado com sucesso!'))
+  .catch(err => console.error('❌ Erro ao conectar MongoDB:', err));
 
 // Rota de teste
 app.get('/', (req, res) => res.send('Servidor rodando!'));
 
 // Rodar servidor
-app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
