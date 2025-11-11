@@ -50,19 +50,22 @@ app.use(express.json({ limit: '10mb' }));
 
 const placeholder = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/v1234567890/placeholder.png`;
 
-// Middleware de autenticação JWT
 function autenticarToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) return res.status(401).json({ error: "Acesso negado. Token não fornecido." });
+  if (!token) 
+    return res.status(401).json({ error: "Acesso negado. Token não fornecido." });
 
   try {
     const usuario = jwt.verify(token, process.env.JWT_SECRET);
     req.usuario = usuario;
     next();
   } catch (err) {
-    return res.status(403).json({ error: "Seu acesso expirou , faça login novamente!" });
+    if (err.name === "TokenExpiredError") {
+      return res.status(403).json({ error: "Seu acesso expirou, faça login novamente!!" });
+    }
+    return res.status(403).json({ error: "Token inválido. Faça login novamente!" });
   }
 }
 
@@ -135,11 +138,11 @@ app.post('/login', async (req, res) => {
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
     if (!senhaValida) return res.status(400).json({ error: "Senha incorreta" });
 
-    const token = jwt.sign(
-      { id: usuario._id, email: usuario.email, nome: usuario.nome },
-      process.env.JWT_SECRET,
-      { expiresIn: "6h" }
-    );
+const token = jwt.sign(
+  { id: usuario._id, email: usuario.email, nome: usuario.nome },
+  process.env.JWT_SECRET,
+  { expiresIn: "6h" } // ← token dura 6 horas agora
+);
 
     // ✅ Retorna token + dados do usuário
     res.json({
